@@ -8,28 +8,41 @@ class LoginForm extends Component {
 
   onButtonPress() {
     const { email, password } = this.state;
+
     this.setState({ error: '', loading: true });
 
-    firebase.auth.signInWithEmailAndPassword(email, password)
-      // user fails to sign in
+    firebase.auth().signInWithEmailAndPassword(email, password)
+      .then(this.onLoginSuccess.bind(this))
       .catch(() => {
         firebase.auth().createUserWithEmailAndPassword(email, password)
-        // user fails to sign up
-        .catch(() => {
-          this.setState({ error: 'Authentication failed!' });
-        });
-     });
+          .then(this.onLoginSuccess.bind(this))
+          .catch(this.onLoginFail.bind(this));
+      });
   }
+
+  onLoginFail() {
+    this.setState({ error: 'Authentication Failed', loading: false });
+  }
+
+  onLoginSuccess() {
+    this.setState({
+      email: '',
+      password: '',
+      loading: false,
+      error: ''
+    });
+  }
+
   renderButton() {
     if (this.state.loading) {
-      return <Spinner size="small" />;
+      return <Spinner dimension="small" />;
     }
 
     return (
       <Button onPress={this.onButtonPress.bind(this)}>
-        Log In
-      </Button> 
-    ); 
+        Log in
+      </Button>
+    );
   }
 
   render() {
@@ -37,25 +50,24 @@ class LoginForm extends Component {
       <Card>
         <CardSection>
           <Input
-            // if i don't specify a prop it's assumed undefined and false, it won't crash
-            placeholder="myemail@gmail.com"
+            placeholder="user@gmail.com"
             label="Email"
             value={this.state.email}
-            onChangeText={emailContent => this.setState({ email: emailContent })}
+            onChangeText={email => this.setState({ email })}
           />
         </CardSection>
-        
+
         <CardSection>
           <Input
-           secureTextEntry 
-           placeholder="password"
-           label="Password"
-           value={this.state.password}
-           onChangeText={passwordContent => this.setState({ password: passwordContent })} 
+            secureTextEntry
+            placeholder="password"
+            label="Password"
+            value={this.state.password}
+            onChangeText={password => this.setState({ password })}
           />
         </CardSection>
-        
-        <Text style={styles.errorTextStyles}>
+
+        <Text style={styles.errorTextStyle}>
           {this.state.error}
         </Text>
 
@@ -67,14 +79,12 @@ class LoginForm extends Component {
   }
 }
 
-
 const styles = {
-  errorTextStyles: {
+  errorTextStyle: {
     fontSize: 20,
     alignSelf: 'center',
     color: 'red'
   }
 };
-
 
 export default LoginForm;
